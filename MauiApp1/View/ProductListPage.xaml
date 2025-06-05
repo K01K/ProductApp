@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="ProductApp.Views.ProductListPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ProductApp.ViewModels"
+             x:DataType="vm:ProductListViewModel"
+             Title="Lista Produktów">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Przycisk odświeżania -->
+        <Button Grid.Row="0"
+                Text="Odśwież"
+                Command="{Binding LoadProductsCommand}"
+                Margin="20,10"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+
+        <!-- Lista produktów -->
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Products}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding ., Mode=OneWay}"
+                        SelectionChangedCommand="{Binding ProductSelectedCommand}"
+                        SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}"
+                        BackgroundColor="Transparent">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="15,10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Obrazek produktu -->
+                        <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="3"
+                                BackgroundColor="LightGray"
+                                StrokeThickness="1"
+                                Stroke="Gray"
+                                StrokeShape="RoundRectangle 8"
+                                WidthRequest="70"
+                                HeightRequest="70"
+                                Margin="0,0,10,0">
+                            <Image Source="{Binding ImageUrl}"
+                                   Aspect="AspectFill" />
+                        </Border>
+
+                        <!-- Nazwa produktu -->
+                        <Label Grid.Row="0" Grid.Column="1"
+                               Text="{Binding Name}"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               LineBreakMode="TailTruncation"
+                               MaxLines="2" />
+
+                        <!-- Kategoria -->
+                        <Label Grid.Row="1" Grid.Column="1"
+                               Text="{Binding Category}"
+                               FontSize="12"
+                               TextColor="Gray"
+                               Margin="0,2,0,0" />
+
+                        <!-- Dostępność -->
+                        <Label Grid.Row="2" Grid.Column="1"
+                               Text="{Binding Stock, StringFormat='Dostępne: {0} szt.'}"
+                               FontSize="12"
+                               TextColor="DarkGreen"
+                               Margin="0,2,0,0" />
+
+                        <!-- Cena -->
+                        <Label Grid.Row="0" Grid.Column="2" Grid.RowSpan="3"
+                               Text="{Binding Price, StringFormat='{0:C}'}"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="DarkBlue"
+                               VerticalOptions="Center" />
+
+                        <!-- Separator -->
+                        <BoxView Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3"
+                                 HeightRequest="1"
+                                 BackgroundColor="LightGray"
+                                 Margin="0,10,0,0" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Wskaźnik ładowania -->
+        <ActivityIndicator Grid.Row="1"
+                          IsVisible="{Binding IsBusy}"
+                          IsRunning="{Binding IsBusy}"
+                          Color="Blue"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center" />
+    </Grid>
+</ContentPage>

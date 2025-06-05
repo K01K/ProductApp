@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="ProductApp.Views.ProductDetailPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ProductApp.ViewModels"
+             x:DataType="vm:ProductDetailViewModel"
+             Title="Szczegóły Produktu">
+
+    <ScrollView>
+        <StackLayout Padding="20" Spacing="15">
+
+            <!-- Wskaźnik ładowania -->
+            <ActivityIndicator IsVisible="{Binding IsBusy}"
+                              IsRunning="{Binding IsBusy}"
+                              Color="Blue"
+                              HorizontalOptions="Center"
+                              Margin="0,50" />
+
+            <!-- Zawartość produktu -->
+            <StackLayout IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                        Spacing="15">
+
+                <!-- Obrazek produktu -->
+                <Border BackgroundColor="White"
+                       StrokeThickness="1"
+                       Stroke="LightGray"
+                       StrokeShape="RoundRectangle 12"
+                       HeightRequest="300"
+                       HorizontalOptions="Center">
+                    <Image Source="{Binding Product.ImageUrl}"
+                          Aspect="AspectFit"
+                          WidthRequest="250"
+                          HeightRequest="250" />
+                </Border>
+
+                <!-- Nazwa produktu -->
+                <Label Text="{Binding Product.Name}"
+                      FontSize="24"
+                      FontAttributes="Bold"
+                      HorizontalOptions="Center"
+                      HorizontalTextAlignment="Center" />
+
+                <!-- Cena -->
+                <Label Text="{Binding Product.Price, StringFormat='{0:C}'}"
+                      FontSize="28"
+                      FontAttributes="Bold"
+                      TextColor="DarkBlue"
+                      HorizontalOptions="Center" />
+
+                <!-- Separator -->
+                <BoxView HeightRequest="1"
+                        BackgroundColor="LightGray"
+                        Margin="0,10" />
+
+                <!-- Informacje podstawowe -->
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="15" RowSpacing="8">
+
+                    <Label Grid.Row="0" Grid.Column="0"
+                          Text="Kategoria:"
+                          FontAttributes="Bold" />
+                    <Label Grid.Row="0" Grid.Column="1"
+                          Text="{Binding Product.Category}" />
+
+                    <Label Grid.Row="1" Grid.Column="0"
+                          Text="Dostępność:"
+                          FontAttributes="Bold" />
+                    <Label Grid.Row="1" Grid.Column="1"
+                          Text="{Binding Product.Stock, StringFormat='{0} sztuk'}"
+                          TextColor="DarkGreen" />
+
+                    <Label Grid.Row="2" Grid.Column="0"
+                          Text="ID Produktu:"
+                          FontAttributes="Bold" />
+                    <Label Grid.Row="2" Grid.Column="1"
+                          Text="{Binding Product.Id}" />
+                </Grid>
+
+                <!-- Separator -->
+                <BoxView HeightRequest="1"
+                        BackgroundColor="LightGray"
+                        Margin="0,15,0,10" />
+
+                <!-- Opis produktu -->
+                <Label Text="Opis produktu"
+                      FontSize="18"
+                      FontAttributes="Bold"
+                      Margin="0,0,0,10" />
+
+                <Frame BackgroundColor="LightGray"
+                      BorderColor="Gray"
+                      CornerRadius="8"
+                      Padding="15">
+                    <Label Text="{Binding Product.Description}"
+                          FontSize="14"
+                          LineHeight="1.4" />
+                </Frame>
+
+            </StackLayout>
+        </StackLayout>
+    </ScrollView>
+</ContentPage>
