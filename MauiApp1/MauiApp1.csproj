@@ -44,18 +44,19 @@
 		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.14" />
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.14" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="App.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </None>
-	  <None Update="AppShell.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </None>
-	  <None Update="MainPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </None>
+		<None Update="App.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</None>
+		<None Update="AppShell.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</None>
+		<None Update="MainPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</None>
 	</ItemGroup>
 
 </Project>

@@ -18,7 +18,7 @@ namespace ProductApp
                 });
 
             // Rejestracja HttpClient
-            builder.Services.AddHttpClient<IProductService, ProductService>();
+            builder.Services.AddHttpClient();
 
             // Rejestracja serwisów
             builder.Services.AddSingleton<IProductService, ProductService>();
