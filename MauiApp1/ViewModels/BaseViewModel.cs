@@ -37,25 +37,9 @@ namespace ProductApp.ViewModels
             return true;
         }
 
-        protected async Task HandleErrorAsync(string message, Exception? exception = null)
+        protected async Task ShowErrorAsync(string message)
         {
-            System.Diagnostics.Debug.WriteLine($"Error: {message} - {exception?.Message}");
-
-            if (Application.Current?.MainPage != null)
-            {
-                await Application.Current.MainPage.DisplayAlert("Błąd", message, "OK");
-            }
-        }
-        protected async Task ExecuteSafeAsync(Func<Task> operation, string? errorMessage = null)
-        {
-            try
-            {
-                await operation();
-            }
-            catch (Exception ex)
-            {
-                await HandleErrorAsync(errorMessage ?? "Wystąpił nieoczekiwany błąd", ex);
-            }
+            await Shell.Current.DisplayAlert("Błąd", message, "OK");
         }
     }
 }

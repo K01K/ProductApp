@@ -13,7 +13,7 @@ namespace ProductApp.ViewModels
         public Product? Product
         {
             get => _product;
-            set => SetProperty(ref _product, value);
+            private set => SetProperty(ref _product, value);
         }
 
         public int ProductId
@@ -23,17 +23,14 @@ namespace ProductApp.ViewModels
             {
                 if (SetProperty(ref _productId, value))
                 {
-                    _ = Task.Run(LoadProductAsync);
+                    _ = LoadProductAsync();
                 }
             }
         }
-        public bool HasProduct => Product != null;
-        public string ProductName => Product?.Name ?? "Ładowanie...";
-        public string ProductDescription => Product?.Description ?? string.Empty;
 
         public ProductDetailViewModel(IProductService productService)
         {
-            _productService = productService ?? throw new ArgumentNullException(nameof(productService));
+            _productService = productService;
             Title = "Szczegóły Produktu";
         }
 
@@ -44,36 +41,24 @@ namespace ProductApp.ViewModels
 
             IsBusy = true;
 
-            await ExecuteSafeAsync(async () =>
+            try
             {
-                var product = await _productService.GetProductByIdAsync(ProductId);
+                Product = await _productService.GetProductByIdAsync(ProductId);
 
-                if (product != null)
+                if (Product == null)
                 {
-                    Product = product;
-                    Title = $"Szczegóły: {product.Name}";
-                    OnPropertyChanged(nameof(HasProduct));
-                    OnPropertyChanged(nameof(ProductName));
-                    OnPropertyChanged(nameof(ProductDescription));
+                    await ShowErrorAsync("Nie znaleziono produktu");
+                    await Shell.Current.GoToAsync("..");
                 }
-                else
-                {
-                    await HandleErrorAsync("Nie znaleziono produktu o podanym identyfikatorze");
-                    if (Shell.Current.Navigation.NavigationStack.Count > 1)
-                    {
-                        await Shell.Current.GoToAsync("..");
-                    }
-                }
-
-            }, "Nie udało się załadować szczegółów produktu");
-
-            IsBusy = false;
-        }
-        public async Task RefreshProductAsync()
-        {
-            if (ProductId > 0)
+            }
+            catch (Exception ex)
             {
-                await LoadProductAsync();
+                await ShowErrorAsync(ex.Message);
+                await Shell.Current.GoToAsync("..");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
     }

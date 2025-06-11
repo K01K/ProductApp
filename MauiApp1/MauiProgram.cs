@@ -15,9 +15,13 @@ namespace ProductApp
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
-            builder.Services.AddHttpClient();
+            builder.Services.AddHttpClient<IProductService, ProductService>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
 
             builder.Services.AddSingleton<IProductService, ProductService>();
 
@@ -29,6 +33,7 @@ namespace ProductApp
 
 #if DEBUG
             builder.Logging.AddDebug();
+            builder.Logging.SetMinimumLevel(LogLevel.Information);
 #endif
 
             return builder.Build();

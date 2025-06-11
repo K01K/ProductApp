@@ -12,178 +12,93 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Panel sterowania -->
-        <Border Grid.Row="0" 
-                BackgroundColor="LightBlue"
-                Stroke="Gray"
-                StrokeThickness="1"
-                Padding="15,10">
-            <Grid ColumnDefinitions="*,Auto">
-                <Label Grid.Column="0"
-                       Text="{Binding Products.Count, StringFormat='Znaleziono {0} produktów'}"
-                       VerticalOptions="Center"
-                       FontSize="14" />
+        <!-- Nagłówek z przyciskiem odświeżania -->
+        <Button Grid.Row="0"
+                Text="Odśwież listę"
+                Command="{Binding LoadProductsCommand}"
+                Margin="20,10"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                BackgroundColor="#512BD4"
+                TextColor="White" />
 
-                <Button Grid.Column="1"
-                        Text="🔄 Odśwież"
-                        Command="{Binding LoadProductsCommand}"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                        BackgroundColor="DarkBlue"
-                        TextColor="White"
-                        CornerRadius="8"
-                        Padding="15,8" />
-            </Grid>
-        </Border>
+        <!-- Wskaźnik ładowania -->
+        <ActivityIndicator Grid.Row="1"
+                          IsVisible="{Binding IsBusy}"
+                          IsRunning="{Binding IsBusy}"
+                          Color="#512BD4"
+                          Scale="1.5"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center" />
 
-        <!-- Lista produktów z RefreshView -->
-        <RefreshView Grid.Row="1"
-                     IsRefreshing="{Binding IsBusy}"
-                     Command="{Binding LoadProductsCommand}">
+        <!-- Lista produktów -->
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Products}"
+                        SelectionMode="Single"
+                        SelectionChangedCommand="{Binding ProductSelectedCommand}"
+                        SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}"
+                        BackgroundColor="Transparent"
+                        IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
 
-            <CollectionView ItemsSource="{Binding Products}"
-                            SelectionMode="Single"
-                            SelectionChangedCommand="{Binding ProductSelectedCommand}"
-                            SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}"
-                            BackgroundColor="Transparent"
-                            ItemSizingStrategy="MeasureAllItems">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="15,5"
+                            Padding="15"
+                            BackgroundColor="White"
+                            Stroke="LightGray"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 12">
 
-                <!-- EmptyView dla pustej listy -->
-                <CollectionView.EmptyView>
-                    <StackLayout Padding="50"
-                                 HorizontalOptions="Center"
-                                 VerticalOptions="Center">
-                        <Label Text="📦"
-                               FontSize="48"
-                               HorizontalOptions="Center" />
-                        <Label Text="Brak produktów do wyświetlenia"
-                               FontSize="16"
-                               HorizontalOptions="Center"
-                               TextColor="Gray" />
-                        <Button Text="Spróbuj ponownie"
-                                Command="{Binding LoadProductsCommand}"
-                                Margin="0,20,0,0"
-                                BackgroundColor="Blue"
-                                TextColor="White" />
-                    </StackLayout>
-                </CollectionView.EmptyView>
+                        <Grid ColumnDefinitions="80,*,Auto" ColumnSpacing="15">
 
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <!-- Dodanie efektu naciśnięcia -->
-                        <Border BackgroundColor="White"
-                                Stroke="LightGray"
-                                StrokeThickness="1"
-                                StrokeShape="RoundRectangle 12"
-                                Margin="10,5"
-                                Padding="0">
+                            <!-- Obrazek produktu -->
+                            <Border Grid.Column="0"
+                                    BackgroundColor="#F5F5F5"
+                                    StrokeThickness="1"
+                                    Stroke="LightGray"
+                                    StrokeShape="RoundRectangle 8"
+                                    WidthRequest="70"
+                                    HeightRequest="70">
+                                <Image Source="{Binding ImageUrl}"
+                                       Aspect="AspectFit" />
+                            </Border>
 
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProductListViewModel}}, Path=ProductSelectedCommand}"
-                                                      CommandParameter="{Binding .}" />
-                            </Border.GestureRecognizers>
-
-                            <!-- Efekt wizualny -->
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup Name="CommonStates">
-                                    <VisualState Name="Normal">
-                                        <VisualState.Setters>
-                                            <Setter Property="BackgroundColor" Value="White" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState Name="Selected">
-                                        <VisualState.Setters>
-                                            <Setter Property="BackgroundColor" Value="LightBlue" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-
-                            <Grid Padding="15" ColumnSpacing="15">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <!-- Obrazek produktu z lepszą obsługą błędów -->
-                                <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="3"
-                                        BackgroundColor="LightGray"
-                                        StrokeThickness="1"
-                                        Stroke="Gray"
-                                        StrokeShape="RoundRectangle 8"
-                                        WidthRequest="70"
-                                        HeightRequest="70">
-                                    <Image Source="{Binding SafeImageUrl}"
-                                           Aspect="AspectFill">
-                                        <Image.Behaviors>
-                                            <!-- Dodanie zachowania dla obsługi błędów ładowania obrazów -->
-                                        </Image.Behaviors>
-                                    </Image>
-                                </Border>
-
-                                <!-- Nazwa produktu -->
-                                <Label Grid.Row="0" Grid.Column="1"
-                                       Text="{Binding Name}"
+                            <!-- Informacje o produkcie -->
+                            <StackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="{Binding Name}"
                                        FontSize="16"
                                        FontAttributes="Bold"
                                        LineBreakMode="TailTruncation"
                                        MaxLines="2" />
 
-                                <!-- Kategoria -->
-                                <Label Grid.Row="1" Grid.Column="1"
-                                       Text="{Binding Category}"
+                                <Label Text="{Binding Category}"
                                        FontSize="12"
-                                       TextColor="Gray"
-                                       Margin="0,2,0,0" />
+                                       TextColor="Gray" />
 
-                                <!-- Status dostępności z kolorami -->
-                                <Label Grid.Row="2" Grid.Column="1"
-                                       Text="{Binding StockDisplay}"
+                                <Label Text="{Binding Stock, StringFormat='Dostępne: {0} szt.'}"
                                        FontSize="12"
-                                       TextColor="{Binding IsInStock, Converter={StaticResource BoolToColorConverter}}"
-                                       Margin="0,2,0,0" />
+                                       TextColor="DarkGreen" />
+                            </StackLayout>
 
-                                <!-- Cena -->
-                                <Label Grid.Row="0" Grid.Column="2" Grid.RowSpan="3"
-                                       Text="{Binding FormattedPrice}"
-                                       FontSize="18"
-                                       FontAttributes="Bold"
-                                       TextColor="DarkBlue"
-                                       VerticalOptions="Center" />
+                            <!-- Cena -->
+                            <Label Grid.Column="2"
+                                   Text="{Binding Price, StringFormat='{0:C2}'}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="#512BD4"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
 
-                                <!-- Wskaźnik w magazynie -->
-                                <Ellipse Grid.Row="0" Grid.Column="2"
-                                         Fill="{Binding IsInStock, Converter={StaticResource BoolToColorConverter}}"
-                                         WidthRequest="10"
-                                         HeightRequest="10"
-                                         HorizontalOptions="End"
-                                         VerticalOptions="Start"
-                                         Margin="0,5,5,0" />
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </RefreshView>
-
-        <!-- Wskaźnik ładowania -->
-        <StackLayout Grid.Row="1"
-                     IsVisible="{Binding IsBusy}"
-                     HorizontalOptions="Center"
-                     VerticalOptions="Center"
-                     Spacing="10">
-            <ActivityIndicator IsRunning="{Binding IsBusy}"
-                              Color="Blue"
-                              Scale="1.5" />
-            <Label Text="Ładowanie produktów..."
-                   FontSize="14"
-                   TextColor="Gray"
-                   HorizontalOptions="Center" />
-        </StackLayout>
+        <!-- Komunikat gdy brak produktów -->
+        <Label Grid.Row="1"
+               Text="Brak produktów do wyświetlenia"
+               FontSize="16"
+               TextColor="Gray"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
     </Grid>
 </ContentPage>

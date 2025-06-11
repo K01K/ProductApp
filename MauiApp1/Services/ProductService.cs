@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using ProductApp.Models;
-using Microsoft.Extensions.Logging;
 
 namespace ProductApp.Services
 {
@@ -8,90 +7,67 @@ namespace ProductApp.Services
     {
         private readonly HttpClient _httpClient;
         private readonly JsonSerializerOptions _jsonOptions;
-        private readonly ILogger<ProductService>? _logger;
-        private readonly string _baseUrl = "https://fakestoreapi.com";
+        private const string BaseUrl = "https://fakestoreapi.com";
 
-        public ProductService(HttpClient httpClient, ILogger<ProductService>? logger = null)
+        public ProductService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _logger = logger;
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             };
-
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
         }
 
         public async Task<List<Product>> GetProductsAsync()
         {
             try
             {
-                _logger?.LogInformation("Pobieranie listy produktów");
-
-                var response = await _httpClient.GetStringAsync($"{_baseUrl}/products");
+                var response = await _httpClient.GetStringAsync($"{BaseUrl}/products");
                 var apiProducts = JsonSerializer.Deserialize<List<ApiProduct>>(response, _jsonOptions);
 
-                var products = apiProducts?.Select(MapToProduct).ToList() ?? new List<Product>();
-
-                _logger?.LogInformation("Pobrano {Count} produktów", products.Count);
-                return products;
+                return apiProducts?.Select(MapToProduct).ToList() ?? new List<Product>();
             }
-            catch (HttpRequestException httpEx)
+            catch (HttpRequestException ex)
             {
-                _logger?.LogError(httpEx, "Błąd połączenia podczas pobierania produktów");
-                throw new InvalidOperationException("Nie można połączyć się z serwerem. Sprawdź połączenie internetowe.", httpEx);
+                System.Diagnostics.Debug.WriteLine($"HTTP Error: {ex.Message}");
+                throw new InvalidOperationException("Nie udało się pobrać danych z serwera");
             }
-            catch (JsonException jsonEx)
+            catch (TaskCanceledException ex)
             {
-                _logger?.LogError(jsonEx, "Błąd deserializacji danych produktów");
-                throw new InvalidOperationException("Otrzymano nieprawidłowe dane z serwera.", jsonEx);
+                System.Diagnostics.Debug.WriteLine($"Timeout Error: {ex.Message}");
+                throw new InvalidOperationException("Przekroczono czas oczekiwania na odpowiedź");
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
-                _logger?.LogError(ex, "Nieoczekiwany błąd podczas pobierania produktów");
-                throw;
+                System.Diagnostics.Debug.WriteLine($"JSON Error: {ex.Message}");
+                throw new InvalidOperationException("Błąd w formacie danych z serwera");
             }
         }
 
         public async Task<Product?> GetProductByIdAsync(int id)
         {
-            if (id <= 0)
-            {
-                _logger?.LogWarning("Próba pobrania produktu z nieprawidłowym ID: {Id}", id);
-                return null;
-            }
-
             try
             {
-                _logger?.LogInformation("Pobieranie produktu o ID: {Id}", id);
-
-                var response = await _httpClient.GetStringAsync($"{_baseUrl}/products/{id}");
+                var response = await _httpClient.GetStringAsync($"{BaseUrl}/products/{id}");
                 var apiProduct = JsonSerializer.Deserialize<ApiProduct>(response, _jsonOptions);
 
-                var product = apiProduct != null ? MapToProduct(apiProduct) : null;
-
-                if (product != null)
-                    _logger?.LogInformation("Pobrano produkt: {ProductName}", product.Name);
-                else
-                    _logger?.LogWarning("Nie znaleziono produktu o ID: {Id}", id);
-
-                return product;
+                return apiProduct != null ? MapToProduct(apiProduct) : null;
             }
-            catch (HttpRequestException httpEx)
+            catch (HttpRequestException ex)
             {
-                _logger?.LogError(httpEx, "Błąd połączenia podczas pobierania produktu {Id}", id);
-                throw new InvalidOperationException("Nie można połączyć się z serwerem. Sprawdź połączenie internetowe.", httpEx);
+                System.Diagnostics.Debug.WriteLine($"HTTP Error: {ex.Message}");
+                throw new InvalidOperationException("Nie udało się pobrać szczegółów produktu");
             }
-            catch (JsonException jsonEx)
+            catch (TaskCanceledException ex)
             {
-                _logger?.LogError(jsonEx, "Błąd deserializacji danych produktu {Id}", id);
-                throw new InvalidOperationException("Otrzymano nieprawidłowe dane z serwera.", jsonEx);
+                System.Diagnostics.Debug.WriteLine($"Timeout Error: {ex.Message}");
+                throw new InvalidOperationException("Przekroczono czas oczekiwania na odpowiedź");
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
-                _logger?.LogError(ex, "Nieoczekiwany błąd podczas pobierania produktu {Id}", id);
-                throw;
+                System.Diagnostics.Debug.WriteLine($"JSON Error: {ex.Message}");
+                throw new InvalidOperationException("Błąd w formacie danych z serwera");
             }
         }
 
@@ -100,22 +76,22 @@ namespace ProductApp.Services
             return new Product
             {
                 Id = apiProduct.Id,
-                Name = string.IsNullOrWhiteSpace(apiProduct.Title) ? "Produkt bez nazwy" : apiProduct.Title,
-                Price = Math.Max(0, apiProduct.Price),
-                Description = apiProduct.Description ?? string.Empty,
-                Stock = Random.Shared.Next(0, 50), 
-                ImageUrl = apiProduct.Image ?? string.Empty,
-                Category = apiProduct.Category ?? "Inne"
+                Name = apiProduct.Title,
+                Price = apiProduct.Price,
+                Description = apiProduct.Description,
+                Stock = Random.Shared.Next(5, 50),
+                ImageUrl = apiProduct.Image,
+                Category = apiProduct.Category
             };
         }
         private sealed class ApiProduct
         {
             public int Id { get; set; }
-            public string? Title { get; set; }
+            public string Title { get; set; } = string.Empty;
             public decimal Price { get; set; }
-            public string? Description { get; set; }
-            public string? Category { get; set; }
-            public string? Image { get; set; }
+            public string Description { get; set; } = string.Empty;
+            public string Category { get; set; } = string.Empty;
+            public string Image { get; set; } = string.Empty;
         }
     }
 }

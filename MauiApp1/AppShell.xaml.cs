@@ -7,8 +7,6 @@ namespace ProductApp
         public AppShell()
         {
             InitializeComponent();
-
-            // Rejestracja route dla szczegółów produktu
             Routing.RegisterRoute(nameof(ProductDetailPage), typeof(ProductDetailPage));
         }
     }
