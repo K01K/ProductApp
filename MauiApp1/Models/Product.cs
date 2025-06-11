@@ -13,8 +13,5 @@
         public string FormattedPrice => $"{Price:C}";
         public string StockDisplay => Stock > 0 ? $"Dostępne: {Stock} szt." : "Brak w magazynie";
         public bool IsInStock => Stock > 0;
-
-        public string SafeImageUrl =>
-            string.IsNullOrWhiteSpace(ImageUrl) ? "https://via.placeholder.com/150" : ImageUrl;
     }
 }
