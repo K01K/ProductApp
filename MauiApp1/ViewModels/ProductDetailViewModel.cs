@@ -21,14 +21,20 @@ namespace ProductApp.ViewModels
             get => _productId;
             set
             {
-                SetProperty(ref _productId, value);
-                _ = LoadProductAsync();
+                if (SetProperty(ref _productId, value))
+                {
+                    _ = Task.Run(LoadProductAsync);
+                }
             }
         }
+        public bool HasProduct => Product != null;
+        public string ProductName => Product?.Name ?? "Ładowanie...";
+        public string ProductDescription => Product?.Description ?? string.Empty;
 
         public ProductDetailViewModel(IProductService productService)
         {
-            _productService = productService;
+            _productService = productService ?? throw new ArgumentNullException(nameof(productService));
+            Title = "Szczegóły Produktu";
         }
 
         private async Task LoadProductAsync()
@@ -38,22 +44,36 @@ namespace ProductApp.ViewModels
 
             IsBusy = true;
 
-            try
+            await ExecuteSafeAsync(async () =>
             {
-                Product = await _productService.GetProductByIdAsync(ProductId);
+                var product = await _productService.GetProductByIdAsync(ProductId);
 
-                if (Product == null)
+                if (product != null)
                 {
-                    await Shell.Current.DisplayAlert("Błąd", "Nie znaleziono produktu", "OK");
+                    Product = product;
+                    Title = $"Szczegóły: {product.Name}";
+                    OnPropertyChanged(nameof(HasProduct));
+                    OnPropertyChanged(nameof(ProductName));
+                    OnPropertyChanged(nameof(ProductDescription));
                 }
-            }
-            catch (Exception ex)
+                else
+                {
+                    await HandleErrorAsync("Nie znaleziono produktu o podanym identyfikatorze");
+                    if (Shell.Current.Navigation.NavigationStack.Count > 1)
+                    {
+                        await Shell.Current.GoToAsync("..");
+                    }
+                }
+
+            }, "Nie udało się załadować szczegółów produktu");
+
+            IsBusy = false;
+        }
+        public async Task RefreshProductAsync()
+        {
+            if (ProductId > 0)
             {
-                await Shell.Current.DisplayAlert("Błąd", "Nie udało się załadować szczegółów produktu", "OK");
-            }
-            finally
-            {
-                IsBusy = false;
+                await LoadProductAsync();
             }
         }
     }

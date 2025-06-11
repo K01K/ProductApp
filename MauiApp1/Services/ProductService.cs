@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using ProductApp.Models;
+using Microsoft.Extensions.Logging;
 
 namespace ProductApp.Services
 {
@@ -7,72 +8,114 @@ namespace ProductApp.Services
     {
         private readonly HttpClient _httpClient;
         private readonly JsonSerializerOptions _jsonOptions;
+        private readonly ILogger<ProductService>? _logger;
         private readonly string _baseUrl = "https://fakestoreapi.com";
 
-        public ProductService(HttpClient httpClient)
+        public ProductService(HttpClient httpClient, ILogger<ProductService>? logger = null)
         {
             _httpClient = httpClient;
+            _logger = logger;
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             };
+
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
         }
 
         public async Task<List<Product>> GetProductsAsync()
         {
             try
             {
+                _logger?.LogInformation("Pobieranie listy produktów");
+
                 var response = await _httpClient.GetStringAsync($"{_baseUrl}/products");
                 var apiProducts = JsonSerializer.Deserialize<List<ApiProduct>>(response, _jsonOptions);
 
-                return apiProducts?.Select(MapToProduct).ToList() ?? new List<Product>();
+                var products = apiProducts?.Select(MapToProduct).ToList() ?? new List<Product>();
+
+                _logger?.LogInformation("Pobrano {Count} produktów", products.Count);
+                return products;
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger?.LogError(httpEx, "Błąd połączenia podczas pobierania produktów");
+                throw new InvalidOperationException("Nie można połączyć się z serwerem. Sprawdź połączenie internetowe.", httpEx);
+            }
+            catch (JsonException jsonEx)
+            {
+                _logger?.LogError(jsonEx, "Błąd deserializacji danych produktów");
+                throw new InvalidOperationException("Otrzymano nieprawidłowe dane z serwera.", jsonEx);
             }
             catch (Exception ex)
             {
-                // W rzeczywistej aplikacji: logowanie błędu
-                return new List<Product>();
+                _logger?.LogError(ex, "Nieoczekiwany błąd podczas pobierania produktów");
+                throw;
             }
         }
 
         public async Task<Product?> GetProductByIdAsync(int id)
         {
+            if (id <= 0)
+            {
+                _logger?.LogWarning("Próba pobrania produktu z nieprawidłowym ID: {Id}", id);
+                return null;
+            }
+
             try
             {
+                _logger?.LogInformation("Pobieranie produktu o ID: {Id}", id);
+
                 var response = await _httpClient.GetStringAsync($"{_baseUrl}/products/{id}");
                 var apiProduct = JsonSerializer.Deserialize<ApiProduct>(response, _jsonOptions);
 
-                return apiProduct != null ? MapToProduct(apiProduct) : null;
+                var product = apiProduct != null ? MapToProduct(apiProduct) : null;
+
+                if (product != null)
+                    _logger?.LogInformation("Pobrano produkt: {ProductName}", product.Name);
+                else
+                    _logger?.LogWarning("Nie znaleziono produktu o ID: {Id}", id);
+
+                return product;
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger?.LogError(httpEx, "Błąd połączenia podczas pobierania produktu {Id}", id);
+                throw new InvalidOperationException("Nie można połączyć się z serwerem. Sprawdź połączenie internetowe.", httpEx);
+            }
+            catch (JsonException jsonEx)
+            {
+                _logger?.LogError(jsonEx, "Błąd deserializacji danych produktu {Id}", id);
+                throw new InvalidOperationException("Otrzymano nieprawidłowe dane z serwera.", jsonEx);
             }
             catch (Exception ex)
             {
-                // W rzeczywistej aplikacji: logowanie błędu
-                return null;
+                _logger?.LogError(ex, "Nieoczekiwany błąd podczas pobierania produktu {Id}", id);
+                throw;
             }
         }
 
-        private Product MapToProduct(ApiProduct apiProduct)
+        private static Product MapToProduct(ApiProduct apiProduct)
         {
             return new Product
             {
                 Id = apiProduct.Id,
-                Name = apiProduct.Title,
-                Price = apiProduct.Price,
-                Description = apiProduct.Description,
-                Stock = 10, // API nie zwraca stock, więc używamy wartości domyślnej
-                ImageUrl = apiProduct.Image,
-                Category = apiProduct.Category
+                Name = string.IsNullOrWhiteSpace(apiProduct.Title) ? "Produkt bez nazwy" : apiProduct.Title,
+                Price = Math.Max(0, apiProduct.Price),
+                Description = apiProduct.Description ?? string.Empty,
+                Stock = Random.Shared.Next(0, 50), 
+                ImageUrl = apiProduct.Image ?? string.Empty,
+                Category = apiProduct.Category ?? "Inne"
             };
         }
-
-        // Klasa pomocnicza do deserializacji JSON z API
-        private class ApiProduct
+        private sealed class ApiProduct
         {
             public int Id { get; set; }
-            public string Title { get; set; } = string.Empty;
+            public string? Title { get; set; }
             public decimal Price { get; set; }
-            public string Description { get; set; } = string.Empty;
-            public string Category { get; set; } = string.Empty;
-            public string Image { get; set; } = string.Empty;
+            public string? Description { get; set; }
+            public string? Category { get; set; }
+            public string? Image { get; set; }
         }
     }
 }

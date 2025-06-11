@@ -9,6 +9,7 @@ namespace ProductApp.ViewModels
     public class ProductListViewModel : BaseViewModel
     {
         private readonly IProductService _productService;
+        private bool _isInitialized;
 
         public ObservableCollection<Product> Products { get; }
         public ICommand LoadProductsCommand { get; }
@@ -16,15 +17,22 @@ namespace ProductApp.ViewModels
 
         public ProductListViewModel(IProductService productService)
         {
-            _productService = productService;
+            _productService = productService ?? throw new ArgumentNullException(nameof(productService));
+
             Products = new ObservableCollection<Product>();
-            LoadProductsCommand = new Command(async () => await LoadProductsAsync());
-            ProductSelectedCommand = new Command<Product>(async (product) => await OnProductSelected(product));
+            LoadProductsCommand = new Command(async () => await LoadProductsAsync(), () => !IsBusy);
+            ProductSelectedCommand = new Command<Product>(async (product) => await OnProductSelectedAsync(product));
+
+            Title = "Lista Produktów";
         }
 
         public async Task InitializeAsync()
         {
+            if (_isInitialized || IsBusy)
+                return;
+
             await LoadProductsAsync();
+            _isInitialized = true;
         }
 
         private async Task LoadProductsAsync()
@@ -34,33 +42,43 @@ namespace ProductApp.ViewModels
 
             IsBusy = true;
 
-            try
+            await ExecuteSafeAsync(async () =>
             {
                 var products = await _productService.GetProductsAsync();
-
                 Products.Clear();
-                foreach (var product in products)
+
+                foreach (var product in products.OrderBy(p => p.Name))
                 {
                     Products.Add(product);
                 }
-            }
-            catch (Exception ex)
-            {
-                // W rzeczywistej aplikacji: pokazanie komunikatu błędu użytkownikowi
-                await Shell.Current.DisplayAlert("Błąd", "Nie udało się załadować produktów", "OK");
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+
+                ((Command)LoadProductsCommand).ChangeCanExecute();
+
+            }, "Nie udało się załadować produktów. Sprawdź połączenie internetowe i spróbuj ponownie.");
+
+            IsBusy = false;
+            ((Command)LoadProductsCommand).ChangeCanExecute();
         }
 
-        private async Task OnProductSelected(Product product)
+        private async Task OnProductSelectedAsync(Product? product)
         {
             if (product == null)
                 return;
 
-            await Shell.Current.GoToAsync($"{nameof(ProductDetailPage)}?id={product.Id}");
+            try
+            {
+                await Shell.Current.GoToAsync($"{nameof(ProductDetailPage)}?id={product.Id}");
+            }
+            catch (Exception ex)
+            {
+                await HandleErrorAsync("Nie udało się otworzyć szczegółów produktu", ex);
+            }
+        }
+
+        public async Task RefreshAsync()
+        {
+            _isInitialized = false;
+            await InitializeAsync();
         }
     }
 }

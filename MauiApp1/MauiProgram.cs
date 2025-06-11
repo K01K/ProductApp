@@ -17,17 +17,13 @@ namespace ProductApp
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
 
-            // Rejestracja HttpClient
             builder.Services.AddHttpClient();
 
-            // Rejestracja serwisów
             builder.Services.AddSingleton<IProductService, ProductService>();
 
-            // Rejestracja ViewModels
             builder.Services.AddTransient<ProductListViewModel>();
             builder.Services.AddTransient<ProductDetailViewModel>();
 
-            // Rejestracja Views
             builder.Services.AddTransient<ProductListPage>();
             builder.Services.AddTransient<ProductDetailPage>();
 
