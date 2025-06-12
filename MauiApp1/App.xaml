@@ -7,7 +7,6 @@
     <Application.Resources>
         <ResourceDictionary>
             <!-- Konwertery -->
-            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
             <converters:BoolToTextConverter x:Key="BoolToTextConverter" />
             <converters:PriceFormatConverter x:Key="PriceFormatConverter" />

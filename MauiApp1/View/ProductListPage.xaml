@@ -3,36 +3,22 @@
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:ProductApp.ViewModels"
-             xmlns:models="clr-namespace:ProductApp.Models"
              x:DataType="vm:ProductListViewModel"
              Title="Lista Produktów">
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <!-- Przycisk odświeżania -->
-        <Button Grid.Row="0"
-                Text="Odśwież"
-                Command="{Binding LoadProductsCommand}"
-                Margin="20,10"
-                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
-
         <!-- Lista produktów -->
-        <CollectionView Grid.Row="1"
-                        ItemsSource="{Binding Products}"
+        <CollectionView ItemsSource="{Binding Products}"
                         SelectionMode="Single"
+                        SelectedItem="{Binding ., Mode=OneWay}"
                         SelectionChangedCommand="{Binding ProductSelectedCommand}"
                         SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}"
                         BackgroundColor="Transparent">
 
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:Product">
+                <DataTemplate>
                     <Grid Padding="15,10">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -97,8 +83,7 @@
         </CollectionView>
 
         <!-- Wskaźnik ładowania -->
-        <ActivityIndicator Grid.Row="1"
-                          IsVisible="{Binding IsBusy}"
+        <ActivityIndicator IsVisible="{Binding IsBusy}"
                           IsRunning="{Binding IsBusy}"
                           Color="Blue"
                           HorizontalOptions="Center"

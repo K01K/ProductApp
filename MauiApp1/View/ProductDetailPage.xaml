@@ -17,7 +17,7 @@
                               Margin="0,50" />
 
             <!-- Zawartość produktu -->
-            <StackLayout IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+            <StackLayout IsVisible="{Binding IsNotBusy}"
                         Spacing="15">
 
                 <!-- Obrazek produktu -->
