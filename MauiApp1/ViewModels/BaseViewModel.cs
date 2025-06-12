@@ -14,6 +14,8 @@ namespace ProductApp.ViewModels
             set => SetProperty(ref _isBusy, value);
         }
 
+        public bool IsNotBusy => !IsBusy;
+
         public string Title
         {
             get => _title;
@@ -25,6 +27,10 @@ namespace ProductApp.ViewModels
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            if (propertyName == nameof(IsBusy))
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsNotBusy)));
+            }
         }
 
         protected bool SetProperty<T>(ref T backingStore, T value, [CallerMemberName] string? propertyName = null)
